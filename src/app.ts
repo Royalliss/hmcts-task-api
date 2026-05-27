@@ -1,6 +1,10 @@
 import express, { type Request, type Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import swaggerUi from "swagger-ui-express";
+import { tasksRouter } from "./routes/tasks.routes.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { swaggerSpec } from "./lib/swagger.js";
 
 export const app = express();
 
@@ -18,7 +22,18 @@ app.get("/health", (_req: Request, res: Response) => {
   });
 });
 
-// Routes will be mounted here later
-// app.use("/api/v1/tasks", tasksRouter);
+// API docs. Served at /api-docs with the spec available at /api-docs.json
+// for any external tooling.
+app.get("/api-docs.json", (_req: Request, res: Response) => {
+  res.status(200).json(swaggerSpec);
+});
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// 404 and error handlers will be mounted here
+// Routes
+app.use("/api/v1/tasks", tasksRouter);
+
+// 404 for anything unmatched, then central error handler. Order matters:
+// notFoundHandler comes after all real routes; errorHandler is registered
+// last so it receives errors from any earlier handler.
+app.use(notFoundHandler);
+app.use(errorHandler);
