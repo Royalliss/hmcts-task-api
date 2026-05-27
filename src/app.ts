@@ -13,6 +13,17 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Tiny index so hitting the root in a browser returns something useful
+// instead of the catch-all 404.
+app.get("/", (_req: Request, res: Response) => {
+  res.status(200).json({
+    name: "HMCTS Task API",
+    docs: "/api-docs",
+    health: "/health",
+    tasks: "/api/v1/tasks",
+  });
+});
+
 // Health check
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({
