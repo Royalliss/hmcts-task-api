@@ -18,12 +18,24 @@ const titleField = z
   .min(1, "title is required")
   .max(255, "title must be 255 characters or fewer");
 
+// Create: description is optional and we coerce undefined / "" to null so
+// the column always holds either text or NULL (not undefined).
 const descriptionField = z
   .string()
   .trim()
   .max(2000, "description must be 2000 characters or fewer")
   .nullish()
   .transform((v) => (v === "" ? null : v ?? null));
+
+// Update: description must round-trip undefined as undefined so the
+// "at least one field provided" refine below can distinguish "user omitted
+// it" from "user explicitly set it to null".
+const updateDescriptionField = z
+  .string()
+  .trim()
+  .max(2000, "description must be 2000 characters or fewer")
+  .nullable()
+  .optional();
 
 export const createTaskSchema = z.object({
   body: z.object({
@@ -49,7 +61,7 @@ export const updateTaskSchema = z.object({
   body: z
     .object({
       title: titleField.optional(),
-      description: descriptionField,
+      description: updateDescriptionField,
       status: taskStatusEnum.optional(),
       dueDate: isoDate.optional(),
     })
